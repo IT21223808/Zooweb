@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zoo AR with Animations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <link rel="icon" href="/vite.svg" />
+
+  <!-- A-Frame & AR.js -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.rawgit.com/jeromeetienne/ar.js/master/aframe/build/aframe-ar.min.js"></script>
+
+  <!-- A-Frame Extras for animation-mixer -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+
+  <script>
+    AFRAME.registerComponent('cycle-animals', {
+      init: function () {
+        const animals = [
+          { name: 'Welcome to Zoo', model: null, scale: null, sound: '/assets/zoo.mp3' },
+          { name: 'Lion', model: '#lion', scale: '0.5 0.5 0.5', sound: '/assets/lion.mp3', animation: 'Animation' },
+          { name: 'Zebra', model: '#zebra', scale: '0.4 0.4 0.4', sound: '/assets/zebra.mp3', animation: 'Animation' },
+          { name: 'Elephant - Idle', model: '#elephant', scale: '0.6 0.6 0.6', sound: '/assets/elephant.mp3', animation: 'TRS|idle' },
+          { name: 'Elephant - Walk', model: '#elephant', scale: '0.6 0.6 0.6', sound: '/assets/elephant.mp3', animation: 'TRS|walk' },
+          { name: 'Elephant - Run', model: '#elephant', scale: '0.6 0.6 0.6', sound: '/assets/elephant.mp3', animation: 'TRS|run' },
+          { name: 'Elephant - Attack', model: '#elephant', scale: '0.6 0.6 0.6', sound: '/assets/elephant.mp3', animation: 'TRS|attack' },
+          { name: 'Elephant - Eating', model: '#elephant', scale: '0.6 0.6 0.6', sound: '/assets/elephant.mp3', animation: 'TRS|eating' },
+          { name: 'Elephant - Death', model: '#elephant', scale: '0.6 0.6 0.6', sound: '/assets/elephant.mp3', animation: 'TRS|death' },
+          { name: 'Giraffe - Drink', model: '#giraffe', scale: '0.7 0.7 0.7', sound: '/assets/giraffe.mp3', animation: 'Drink' },
+          { name: 'Giraffe - Eat', model: '#giraffe', scale: '0.7 0.7 0.7', sound: '/assets/giraffe.mp3', animation: 'Eat' },
+          { name: 'Giraffe - Walk', model: '#giraffe', scale: '0.7 0.7 0.7', sound: '/assets/giraffe.mp3', animation: 'Walk_Forward' },
+          { name: 'Giraffe - Run Start', model: '#giraffe', scale: '0.7 0.7 0.7', sound: '/assets/giraffe.mp3', animation: 'Run_Start' },
+          { name: 'Giraffe - Run', model: '#giraffe', scale: '0.7 0.7 0.7', sound: '/assets/giraffe.mp3', animation: 'Run_Forward' },
+          { name: 'Horse', model: '#horse', scale: '0.6 0.6 0.6', sound: '/assets/horse.mp3', animation: 'Horse_walk' },
+        ];
+
+        let currentIndex = 0;
+        let animalEntity = null;
+        let soundEntity = null;
+        const textEntity = document.querySelector('#animal-text');
+
+        const updateAnimal = () => {
+          const animal = animals[currentIndex];
+
+          if (animalEntity && animalEntity.parentNode) animalEntity.parentNode.removeChild(animalEntity);
+          if (soundEntity && soundEntity.parentNode) {
+            if (soundEntity.components?.sound) soundEntity.components.sound.stopSound();
+            soundEntity.parentNode.removeChild(soundEntity);
+          }
+
+          textEntity.setAttribute('value', animal.name);
+
+          if (animal.model) {
+            animalEntity = document.createElement('a-entity');
+            animalEntity.setAttribute('position', '0 0 0');
+            animalEntity.setAttribute('scale', animal.scale);
+            animalEntity.setAttribute('gltf-model', animal.model);
+
+            animalEntity.addEventListener('model-loaded', () => {
+              if (animal.animation) {
+                animalEntity.setAttribute('animation-mixer', `clip: ${animal.animation}; loop: repeat`);
+              }
+            });
+
+            this.el.appendChild(animalEntity);
+          }
+
+          if (animal.sound) {
+            soundEntity = document.createElement('a-entity');
+            soundEntity.setAttribute('sound', `src: ${animal.sound}; autoplay: true`);
+            this.el.appendChild(soundEntity);
+          }
+        };
+
+        const button = document.getElementById('cycle-button');
+        button.addEventListener('click', () => {
+          currentIndex = (currentIndex + 1) % animals.length;
+          updateAnimal();
+        });
+
+        this.el.sceneEl.addEventListener('markerFound', () => {
+          updateAnimal();
+        });
+      }
+    });
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+    a-scene {
+      width: 100%;
+      height: 100%;
+    }
+    #cycle-button {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      z-index: 10;
+    }
+    @media (max-width: 600px) {
+      #cycle-button {
+        font-size: 14px;
+        padding: 8px 16px;
+        bottom: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono; matrixCodeType: 3x3;" vr-mode-ui="enabled: false">
+    <a-assets timeout="30000">
+      <a-asset-item id="lion" src="/assets/lion.glb"></a-asset-item>
+      <a-asset-item id="zebra" src="/assets/zebra.glb"></a-asset-item>
+      <a-asset-item id="elephant" src="/assets/elephant.glb"></a-asset-item>
+      <a-asset-item id="giraffe" src="/assets/giraffe.glb"></a-asset-item>
+      <a-asset-item id="horse" src="/assets/horse.glb"></a-asset-item>
+      <!-- <img id="zoo-background" src="/assets/zoo.jpg" /> -->
+    </a-assets>
+
+    <!-- <a-sky src="#zoo-background" rotation="0 0 0"></a-sky> -->
+
+    <a-marker preset="hiro" emitevents="true" cycle-animals>
+      <a-entity position="0 0.5 0">
+        <a-text id="animal-text" value="" align="center" position="0 1.5 0" color="#000" width="6"></a-text>
+      </a-entity>
+      <a-entity light="type: ambient; color: #fff"></a-entity>
+      <a-entity light="type: directional; intensity: 0.8" position="1 1 1"></a-entity>
+    </a-marker>
+
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <button id="cycle-button">Next Animal</button>
+</body>
+</html>
